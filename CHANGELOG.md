@@ -1,3 +1,13 @@
+## 0.8.6
+ - Added `seek` method.
+
+## 0.8.2
+ - Fixed error in more Android versions
+
+## 0.8.1
+ - Added `disableSeek`, `pauseOnPress`, `fullScreenOnLongPress` (thanks @mateofd).
+ - Bumped react-native-video version (thanks @ndcollins).
+
 ## 0.8.0
  - Updated to react native 0.46.4 and fixed PropTypes (thanks @Traviskn).
  - Added `onStart` property (thanks @gvillenave).

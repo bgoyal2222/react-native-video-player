@@ -1,7 +1,12 @@
-import React, { Component, PropTypes } from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Platform, NativeModules } from 'react-native';
+
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { Image, ImageBackground, Platform, StyleSheet, TouchableOpacity, View, ViewPropTypes } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import Video from 'react-native-video';
+import Video from 'react-native-video'; // eslint-disable-line
+
+const BackgroundImage = ImageBackground || Image; // fall back to Image if RN < 0.46
+
 const styles = StyleSheet.create({
   preloadingPlaceholder: {
     backgroundColor: 'black',
@@ -178,6 +183,7 @@ export default class VideoPlayer extends Component {
 
     if (this.props.endWithThumbnail) {
       this.setState({ isStarted: false });
+      this.player.dismissFullscreenPlayer();
     }
 
     this.player.seek(0);
@@ -311,6 +317,10 @@ export default class VideoPlayer extends Component {
     this.hideControls();
   }
 
+  seek(t) {
+    this.player.seek(t);
+  }
+
   renderStartButton() {
     const { customStyles } = this.props;
     return (
@@ -326,7 +336,7 @@ export default class VideoPlayer extends Component {
   renderThumbnail() {
     const { thumbnail, style, customStyles, ...props } = this.props;
     return (
-      <Image
+      <BackgroundImage
         {...props}
         style={[
           styles.thumbnail,
@@ -337,12 +347,12 @@ export default class VideoPlayer extends Component {
         source={thumbnail}
       >
         {this.renderStartButton()}
-      </Image>
+      </BackgroundImage>
     );
   }
 
   renderSeekBar(fullWidth) {
-    const { customStyles } = this.props;
+    const { customStyles, disableSeek } = this.props;
     return (
       <View
         style={[
@@ -360,7 +370,7 @@ export default class VideoPlayer extends Component {
             customStyles.seekBarProgress,
           ]}
         />
-        { !fullWidth ? (
+        { !fullWidth && !disableSeek ? (
           <View
             style={[
               styles.seekBarKnob,
@@ -426,6 +436,8 @@ export default class VideoPlayer extends Component {
       video,
       style,
       resizeMode,
+      pauseOnPress,
+      fullScreenOnLongPress,
       customStyles,
       ...props
     } = this.props;
@@ -454,7 +466,18 @@ export default class VideoPlayer extends Component {
             { marginTop: -this.getSizeStyles().height },
           ]}
         >
-          <TouchableOpacity style={styles.overlayButton} onPress={this.showControls} />
+          <TouchableOpacity 
+            style={styles.overlayButton} 
+            onPress={() => {
+              this.showControls();
+              if (pauseOnPress)
+                this.onPlayPress();
+            }}
+            onLongPress={() => {
+              if (fullScreenOnLongPress && Platform.OS !== 'android')
+                this.onToggleFullScreen();
+            }} 
+          />
         </View>
         {((!this.state.isPlaying) || this.state.isControlsVisible)
           ? this.renderControls() : this.renderSeekBar(true)}
@@ -503,6 +526,9 @@ VideoPlayer.propTypes = {
   resizeMode: Video.propTypes.resizeMode,
   hideControlsOnStart: PropTypes.bool,
   endWithThumbnail: PropTypes.bool,
+  disableSeek: PropTypes.bool,
+  pauseOnPress: PropTypes.bool,
+  fullScreenOnLongPress: PropTypes.bool,
   customStyles: PropTypes.shape({
     wrapper: View.propTypes.style,
     video: Video.propTypes.style,
@@ -534,5 +560,8 @@ VideoPlayer.defaultProps = {
   controlsTimeout: 2000,
   loop: false,
   resizeMode: 'contain',
+  disableSeek: false,
+  pauseOnPress: false,
+  fullScreenOnLongPress: false,
   customStyles: {},
 };
