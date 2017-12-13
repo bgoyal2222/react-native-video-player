@@ -108,7 +108,7 @@ export default class VideoPlayer extends Component {
     this.wasPlayingBeforeSeek = props.autoplay;
     this.seekTouchStart = 0;
     this.seekProgressStart = 0;
-
+    this.seek=this.seek.bind(this);
     this.onLayout = this.onLayout.bind(this);
     this.onStartPress = this.onStartPress.bind(this);
     this.onProgress = this.onProgress.bind(this);
@@ -551,6 +551,7 @@ VideoPlayer.propTypes = {
   onEnd: PropTypes.func,
   onProgress: PropTypes.func,
   onLoad: PropTypes.func,
+  seek:PropTypes.func
 };
 
 VideoPlayer.defaultProps = {
