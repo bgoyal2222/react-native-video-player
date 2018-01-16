@@ -1,7 +1,7 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Image, ImageBackground, Platform, StyleSheet, TouchableOpacity, View, ViewPropTypes } from 'react-native';
+import { Image, ImageBackground, Platform, StyleSheet, TouchableOpacity, View, ViewPropTypes,NativeModules } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Video from 'react-native-video'; // eslint-disable-line
 
@@ -87,12 +87,9 @@ const styles = StyleSheet.create({
 });
 
 export default class VideoPlayer extends Component {
-
-
-
+	
   constructor(props) {
     super(props);
-
     this.state = {
       isStarted: props.autoplay,
       isPlaying: props.autoplay,
@@ -102,13 +99,13 @@ export default class VideoPlayer extends Component {
       isControlsVisible: !props.hideControlsOnStart,
       duration: 0,
       isSeeking: false,
+      seek:0
     };
 
     this.seekBarWidth = 200;
     this.wasPlayingBeforeSeek = props.autoplay;
     this.seekTouchStart = 0;
     this.seekProgressStart = 0;
-
     this.onLayout = this.onLayout.bind(this);
     this.onStartPress = this.onStartPress.bind(this);
     this.onProgress = this.onProgress.bind(this);
@@ -123,13 +120,13 @@ export default class VideoPlayer extends Component {
     this.onSeekRelease = this.onSeekRelease.bind(this);
     this.onSeek = this.onSeek.bind(this);
   }
-
+  
   componentDidMount() {
     if (this.props.autoplay) {
       this.hideControls();
     }
   }
-
+  player=null
   componentWillUnmount() {
     if (this.controlsTimeout) {
       clearTimeout(this.controlsTimeout);
@@ -157,10 +154,9 @@ export default class VideoPlayer extends Component {
       isPlaying: true,
       isStarted: true,
     });
-
     this.hideControls();
     if(this.props.onStartPress){
-      this.props.onStartPress(this);
+      this.props.onStartPress();
     };
   }
 
@@ -195,6 +191,7 @@ export default class VideoPlayer extends Component {
   }
 
   onLoad(event) {
+    console.log("onload",event);
     if (this.props.onLoad) {
       this.props.onLoad(event);
     }
@@ -204,7 +201,7 @@ export default class VideoPlayer extends Component {
   }
 
   onPlayPress() {
-    console.log('onPlayPress :: videoComponent')
+    //console.log('onPlayPress :: videoComponent')
     this.setState({
       isPlaying: !this.state.isPlaying,
     });
@@ -278,11 +275,10 @@ export default class VideoPlayer extends Component {
     const diff = e.nativeEvent.pageX - this.seekTouchStart;
     const ratio = 100 / this.seekBarWidth;
     const progress = this.seekProgressStart + ((ratio * diff) / 100);
-
+    //console.log("progress",progress);
     this.setState({
       progress,
     });
-
     this.player.seek(progress * this.state.duration);
   }
 
@@ -317,10 +313,9 @@ export default class VideoPlayer extends Component {
     this.hideControls();
   }
 
-  seek(t) {
-    this.player.seek(t);
+  seek=(t)=>{
+    this.setState({seek:t});
   }
-
   renderStartButton() {
     const { customStyles } = this.props;
     return (
@@ -451,7 +446,7 @@ export default class VideoPlayer extends Component {
             style,
             customStyles.video,
           ]}
-          ref={p => { this.player = p; }}
+          ref={(p)=>{this.player=p}}
           muted={this.props.muted || this.state.isMuted}
           paused={!this.state.isPlaying}
           onProgress={this.onProgress}
@@ -508,6 +503,14 @@ export default class VideoPlayer extends Component {
       </View>
     );
   }
+  componentDidUpdate(prevProps,prevState){
+  	if(this.state.isStarted==true && prevState.isStarted==false){
+  		//console.log(this.player,"heya");
+      let seek=this.state.seek;
+  		this.setState({seek:0,progress:seek/this.state.duration});
+      setTimeout(()=>{this.player.seek(seek)},2000);
+  	}
+  }
 }
 
 VideoPlayer.propTypes = {
@@ -550,7 +553,7 @@ VideoPlayer.propTypes = {
   }),
   onEnd: PropTypes.func,
   onProgress: PropTypes.func,
-  onLoad: PropTypes.func,
+  onLoad: PropTypes.func
 };
 
 VideoPlayer.defaultProps = {
